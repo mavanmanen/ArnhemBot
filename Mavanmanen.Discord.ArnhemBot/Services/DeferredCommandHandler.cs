@@ -15,13 +15,7 @@ public class DeferredCommandHandler : IDeferredCommandHandler
         _timer = new Timer(CheckRunningCommands, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
     }
     
-    private void CheckRunningCommands(object? _)
-    {
-        _deferredCommands.RemoveAll(c => c.IsCompleted);
-    }
+    private void CheckRunningCommands(object? _) => _deferredCommands.RemoveAll(c => c.IsCompleted);
 
-    public void DeferCommand(Func<Task> command)
-    {
-        _deferredCommands.Add(Task.Run(command));
-    }
+    public void DeferCommand(Func<Task> command) => _deferredCommands.Add(Task.Run(command));
 }

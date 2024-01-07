@@ -4,17 +4,16 @@ using RestSharp.Serializers.Json;
 
 namespace Mavanmanen.Discord.ArnhemBot.Services;
 
-public record MementoPredictionResult(MementoPredictionResultItem[] MementoInfo);
-
-public record MementoPredictionResultItem(Uri TimegateUri, string ArchiveId);
-
 public interface IMementoApiClient
 {
-    public Task<MementoPredictionResult?> GetResultsAsync(string uri);
+    public Task<string?> GetResultsAsync(string uri);
 }
 
 public class MementoApiClient : IMementoApiClient
 {
+    private record MementoPredictionResult(MementoPredictionResultItem[] MementoInfo);
+    private record MementoPredictionResultItem(Uri TimegateUri, string ArchiveId);
+    
     private readonly RestClient _client;
 
     public MementoApiClient()
@@ -28,10 +27,10 @@ public class MementoApiClient : IMementoApiClient
         });
     }
 
-    public async Task<MementoPredictionResult?> GetResultsAsync(string uri)
+    public async Task<string?> GetResultsAsync(string uri)
     {
         var request = new RestRequest($"/prediction/json/{uri}");
         var result = await _client.ExecuteGetAsync<MementoPredictionResult>(request);
-        return result.IsSuccessful == false ? null : result.Data!;
+        return result.IsSuccessful == false ? null : result.Data?.MementoInfo.FirstOrDefault(m => m.ArchiveId == "archive.is")?.TimegateUri.ToString();
     }
 }

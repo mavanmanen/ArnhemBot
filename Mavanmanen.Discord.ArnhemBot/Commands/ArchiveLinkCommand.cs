@@ -14,16 +14,15 @@ public class ArchiveLinkCommand(IMementoApiClient mementoApiClient, ILoggingServ
     public async Task<bool> ExecuteAsync(SocketSlashCommand command)
     {
         var originalLink = ((string)command.Data.Options.Single().Value).Trim();
+        var originalLinkEmbed = await command.ModifyOriginalResponseAsync(properties => properties.Content = $"Getting archive link for: {originalLink}");
 
-        var result = await mementoApiClient.GetResultsAsync(originalLink);
-        var archivedLink = result?.MementoInfo.FirstOrDefault(r => r.ArchiveId == "archive.is")?.TimegateUri.ToString();
+        var archivedLink = await mementoApiClient.GetResultsAsync(originalLink);
         if (archivedLink is null)
         {
             await loggingService.LogErrorAsync(nameof(ArchiveLinkCommand), $"Failed");
             return false;
         }
 
-        var originalLinkEmbed = await command.ModifyOriginalResponseAsync(properties => properties.Content = originalLink);
         while (originalLinkEmbed.Embeds.Count == 0)
         {
             await Task.Delay(100);
@@ -42,6 +41,7 @@ public class ArchiveLinkCommand(IMementoApiClient mementoApiClient, ILoggingServ
                 .WithImageUrl(embed.Image?.Url ?? embed.Thumbnail?.Url)
                 .Build();
         });
+        
         return true;
     }
 }
