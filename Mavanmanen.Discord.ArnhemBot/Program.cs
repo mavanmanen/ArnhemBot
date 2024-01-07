@@ -25,8 +25,13 @@ foreach (var commandType in commandTypes)
 
 var serviceProvider = services.BuildServiceProvider();
 
-var secret = File.ReadAllText("./bottoken");
+var botToken = Environment.GetEnvironmentVariable("BOT_TOKEN");
+if (botToken is null)
+{
+    Console.Write("Enter the bot token: ");
+    botToken = Console.ReadLine() ?? throw new Exception("Bot token must be present");
+}
 
 var client = serviceProvider.GetRequiredService<IDiscordBotClient>();
-await client.StartAsync(secret);
+await client.StartAsync(botToken);
 await Task.Delay(Timeout.Infinite);

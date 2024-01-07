@@ -14,11 +14,5 @@
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
       <PackageReference Include="RestSharp" Version="110.2.0" />
     </ItemGroup>
-
-    <ItemGroup>
-      <None Update="bottoken">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
+    
 </Project>

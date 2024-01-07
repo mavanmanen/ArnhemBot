@@ -3,3 +3,4 @@ services:
     container_name: ArnhemBot
     build:
       dockerfile: ./Dockerfile
+    env_file: ./secrets.env
