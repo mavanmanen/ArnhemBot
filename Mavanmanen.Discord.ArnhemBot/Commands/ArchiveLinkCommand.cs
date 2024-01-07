@@ -4,15 +4,8 @@ using Mavanmanen.Discord.ArnhemBot.Services;
 
 namespace Mavanmanen.Discord.ArnhemBot.Commands;
 
-public class ArchiveLinkCommand : ICommand
+public class ArchiveLinkCommand(IMementoApiClient mementoApiClient) : ICommand
 {
-    private readonly IMementoApiClient _mementoApiClient;
-
-    public ArchiveLinkCommand(IMementoApiClient mementoApiClient)
-    {
-        _mementoApiClient = mementoApiClient;
-    }
-
     public string Name => "archive-link";
 
     public ApplicationCommandProperties Build() =>
@@ -26,7 +19,7 @@ public class ArchiveLinkCommand : ICommand
     {
         var originalLink = ((string)command.Data.Options.Single().Value).Trim();
 
-        var result = await _mementoApiClient.GetResultsAsync(originalLink);
+        var result = await mementoApiClient.GetResultsAsync(originalLink);
         if (result is null)
         {
             await command.ModifyOriginalResponseAsync(properties => properties.Content = "No results.");

@@ -1,13 +1,17 @@
 ﻿using System.Reflection;
+using System.Text.Json;
 using Mavanmanen.Discord.ArnhemBot.Commands;
 using Mavanmanen.Discord.ArnhemBot.Services;
 using Microsoft.Extensions.DependencyInjection;
+using RestSharp;
+using RestSharp.Serializers.Json;
 
 var services = new ServiceCollection();
 
 services.AddSingleton<ILoggingService, LoggingService>();
+services.AddSingleton<IDeferredCommandHandler, DeferredCommandHandler>();
 services.AddSingleton<ICommandHandler, CommandHandler>();
-services.AddSingleton<IMementoApiClient, MementoApiClient>();
+services.AddScoped<IMementoApiClient, MementoApiClient>();
 services.AddSingleton<IDiscordBotClient, DiscordBotClient>();
 
 var commandTypes = Assembly.GetExecutingAssembly().DefinedTypes
