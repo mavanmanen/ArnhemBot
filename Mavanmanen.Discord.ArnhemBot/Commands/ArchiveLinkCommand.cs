@@ -1,38 +1,47 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Mavanmanen.Discord.ArnhemBot.Attributes;
 using Mavanmanen.Discord.ArnhemBot.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Mavanmanen.Discord.ArnhemBot.Commands;
 
-public class ArchiveLinkCommand(IMementoApiClient mementoApiClient) : ICommand
+[Command("archive-link", "Get the archive.ph link for another link")]
+[CommandOption("link", ApplicationCommandOptionType.String, "The link to search for", isRequired: true)]
+[CommandService(ServiceLifetime.Scoped, typeof(IMementoApiClient), typeof(MementoApiClient))]
+public class ArchiveLinkCommand(IMementoApiClient mementoApiClient, ILoggingService loggingService) : ICommand
 {
-    public string Name => "archive-link";
-
-    public ApplicationCommandProperties Build() =>
-        new SlashCommandBuilder()
-            .WithName(Name)
-            .WithDescription("Get the archive.ph link for another link.")
-            .AddOption("link", ApplicationCommandOptionType.String, "The link to search for.", isRequired: true)
-            .Build();
-
-    public async Task ExecuteAsync(SocketSlashCommand command)
+    public async Task<bool> ExecuteAsync(SocketSlashCommand command)
     {
         var originalLink = ((string)command.Data.Options.Single().Value).Trim();
 
         var result = await mementoApiClient.GetResultsAsync(originalLink);
-        if (result is null)
-        {
-            await command.ModifyOriginalResponseAsync(properties => properties.Content = "No results.");
-            return;
-        }
-        
-        var archivedLink = result.MementoInfo.FirstOrDefault(r => r.ArchiveId == "archive.is");
+        var archivedLink = result?.MementoInfo.FirstOrDefault(r => r.ArchiveId == "archive.is")?.TimegateUri.ToString();
         if (archivedLink is null)
         {
-            await command.ModifyOriginalResponseAsync(properties => properties.Content = "No results.");
-            return;
+            await loggingService.LogErrorAsync(nameof(ArchiveLinkCommand), $"Failed");
+            return false;
         }
 
-        await command.ModifyOriginalResponseAsync(properties => properties.Content = archivedLink.TimegateUri.ToString());
+        var originalLinkEmbed = await command.ModifyOriginalResponseAsync(properties => properties.Content = originalLink);
+        while (originalLinkEmbed.Embeds.Count == 0)
+        {
+            await Task.Delay(100);
+        }
+        await originalLinkEmbed.ModifyAsync(properties =>
+        {
+            properties.Content = archivedLink;
+
+            var embed = originalLinkEmbed.Embeds.Single();
+
+            properties.Embed = new EmbedBuilder()
+                .WithTitle(embed.Title)
+                .WithDescription(embed.Description)
+                .WithAuthor(embed.Author?.Name)
+                .WithUrl(archivedLink)
+                .WithImageUrl(embed.Image?.Url ?? embed.Thumbnail?.Url)
+                .Build();
+        });
+        return true;
     }
 }

@@ -8,17 +8,20 @@ public interface IDiscordBotClient
     public Task StartAsync(string token);
 }
 
-public class DiscordBotClient(ICommandHandler commandHandler, ILoggingService loggingService) : IDiscordBotClient
+public class DiscordBotClient(
+    DiscordSocketClient client,
+    ICommandHandler commandHandler,
+    ILoggingService loggingService,
+    IRandomActivityService randomActivityService) : IDiscordBotClient
 {
-    private readonly DiscordSocketClient _client = new();
-
     public async Task StartAsync(string token)
     {
-        _client.Log += loggingService.LogAsync;
-        _client.Ready += () => commandHandler.RegisterCommandsAsync(_client);
-        _client.SlashCommandExecuted += commandHandler.HandleCommandAsync;
+        client.Log += loggingService.LogAsync;
+        client.SlashCommandExecuted += commandHandler.HandleCommandAsync;
+        client.GuildAvailable += commandHandler.RegisterCommandsAsync;
         
-        await _client.LoginAsync(TokenType.Bot, token);
-        await _client.StartAsync();
+        await client.LoginAsync(TokenType.Bot, token);
+        await client.StartAsync();
+        randomActivityService.Start();
     }
 }

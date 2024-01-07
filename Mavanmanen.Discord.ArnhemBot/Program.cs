@@ -1,27 +1,20 @@
-﻿using System.Reflection;
-using System.Text.Json;
-using Mavanmanen.Discord.ArnhemBot.Commands;
+﻿using Discord;
+using Discord.WebSocket;
 using Mavanmanen.Discord.ArnhemBot.Services;
 using Microsoft.Extensions.DependencyInjection;
-using RestSharp;
-using RestSharp.Serializers.Json;
 
 var services = new ServiceCollection();
 
 services.AddSingleton<ILoggingService, LoggingService>();
+services.AddSingleton<ICommandDiscoverer>(new CommandDiscoverer(services));
 services.AddSingleton<IDeferredCommandHandler, DeferredCommandHandler>();
 services.AddSingleton<ICommandHandler, CommandHandler>();
-services.AddScoped<IMementoApiClient, MementoApiClient>();
-services.AddSingleton<IDiscordBotClient, DiscordBotClient>();
-
-var commandTypes = Assembly.GetExecutingAssembly().DefinedTypes
-    .Where(t => t.GetInterfaces().Contains(typeof(ICommand)));
-
-foreach (var commandType in commandTypes)
+services.AddSingleton(new DiscordSocketClient(new DiscordSocketConfig
 {
-    services.AddScoped(commandType);
-    services.AddScoped(typeof(ICommand), commandType);
-}
+    GatewayIntents = GatewayIntents.Guilds | GatewayIntents.GuildMessages
+}));
+services.AddSingleton<IDiscordBotClient, DiscordBotClient>();
+services.AddSingleton<IRandomActivityService, RandomActivityService>();
 
 var serviceProvider = services.BuildServiceProvider();
 
