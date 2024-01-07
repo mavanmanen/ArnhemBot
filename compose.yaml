@@ -1,6 +1,8 @@
+name: arnhembot
 services:
   bot:
     container_name: ArnhemBot
+    restart: on-failure
     build:
       dockerfile: ./Dockerfile
     env_file: ./secrets.env
